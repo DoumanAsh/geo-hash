@@ -19,3 +19,5 @@ version = "1"
 default-features = false
 optional = true
 
+[package.metadata.docs.rs]
+features = ["serde"]

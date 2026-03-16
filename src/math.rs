@@ -10,6 +10,11 @@ const SIG_MASK: u64 = (1 << SIGNIFICAND_BITS) - 1;
 const EXP_MAX: i32 = EXP_BIAS as i32;
 const EXP_MIN: i32 = -(EXP_MAX - 1);
 
+//Rust's libcore impl
+pub const fn rem_euclid(x: f64, rhs: f64) -> f64 {
+    let r = x % rhs;
+    if r < 0.0 { r + rhs.abs() } else { r }
+}
 
 const fn f64_from_parts(exponent: u32, significand: u64) -> f64 {
     f64::from_bits(

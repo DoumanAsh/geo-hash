@@ -1,7 +1,7 @@
 //Based on https://mmcloughlin.com/posts/geohash-assembly
 
 use core::{hash, fmt, ptr};
-use super::{Coordinate, MAX_LAT, MAX_LON};
+use super::{Bbox, Coordinate, MAX_LAT, MAX_LON};
 
 const CHUNK_BITS_SIZE: usize = 5;
 const MAX_LEN: usize = 12;
@@ -86,8 +86,7 @@ const fn encode(coord: Coordinate, len: usize) -> GeoHash {
 ///Geohash codec
 ///
 ///Its `LEN` must be in range of `1..=12`.
-///This is validated at compile time to ensure you can only use `encode_bits` when `LEN` is correct
-///without runtime checks
+///This is validated at compile time to ensure you can only use [Codec::encode] when `LEN` is correct.
 pub struct Codec<const LEN: usize>;
 
 impl<const LEN: usize> Codec<LEN> {
@@ -174,7 +173,7 @@ impl GeoHash {
     }
 
     ///Decodes geohash into its cell's coordinates
-    pub const fn decode_bbox(&self) -> Result<(Coordinate, Coordinate), DecodeError> {
+    pub const fn decode_bbox(&self) -> Result<Bbox, DecodeError> {
         let bits_len = self.len * CHUNK_BITS_SIZE as u8;
 
         let mut position = 0;
@@ -222,7 +221,7 @@ impl GeoHash {
             let p = f64::from_bits(((x as u64) << 20) | (1023 << 52));
             2.0 * r * (p - 1.0) - r
         }
-        let left = Coordinate {
+        let min = Coordinate {
             latitude: decode32(lat32, MAX_LAT),
             longitude: decode32(lon32, MAX_LON),
         };
@@ -239,13 +238,16 @@ impl GeoHash {
             }
         }
 
-        let right_diff = calc_geohash_diff(bits_len as u32);
-        let right = Coordinate {
-            latitude: left.latitude + right_diff.latitude,
-            longitude: left.longitude + right_diff.longitude,
+        let max_diff = calc_geohash_diff(bits_len as u32);
+        let max = Coordinate {
+            latitude: min.latitude + max_diff.latitude,
+            longitude: min.longitude + max_diff.longitude,
         };
 
-        Ok((left, right))
+        Ok(Bbox {
+            min,
+            max
+        })
     }
 }
 
