@@ -69,7 +69,7 @@ fn validate_geohash_encoding() {
     ];
     for (expected, lat, lon) in data {
         let result = CODEC::encode(Coordinate::new(lat, lon));
-        let expected = GeoHash::from_str(expected).expect("to create geo hash");
+        let expected = GeoHash::from_str(expected);
         assert_eq!(result, expected, "Coordinate({lat}, {lon}) has geohash='{result}' but expected='{expected}'");
     }
 }
@@ -81,21 +81,33 @@ fn f64_round(x: f64, decimals: u32) -> f64 {
 
 #[track_caller]
 fn compare_coordinates(left: Coordinate, expected: Coordinate) {
-    assert_eq!(f64_round(left.latitude(), 4), f64_round(expected.latitude(), 4), "Expected latitude='{}' but got '{}'", expected.latitude(), left.latitude());
-    assert_eq!(f64_round(left.longitude(), 4), f64_round(expected.longitude(), 4), "Expected longitude='{}' but got '{}'", expected.longitude(), left.longitude());
+    assert_eq!(f64_round(left.latitude(), 12), f64_round(expected.latitude(), 12), "Expected latitude='{}' but got '{}'", expected.latitude(), left.latitude());
+    assert_eq!(f64_round(left.longitude(), 12), f64_round(expected.longitude(), 12), "Expected longitude='{}' but got '{}'", expected.longitude(), left.longitude());
 }
 
 #[test]
 fn validate_geohash_decoding() {
     let data = [
-        ("ww8p1r4t8", Coordinate::new(37.83236503601074, 112.55836486816406), Coordinate::new(37.83240795135498, 112.558407783508)),
+        ("d", Coordinate::new(0.0, -90.0), Coordinate::new(45.0, -45.0)),
+        ("db", Coordinate::new(0.0, -56.25), Coordinate::new(5.625, -45.0)),
+        ("dbc", Coordinate::new(4.21875, -54.84375), Coordinate::new(5.625, -53.4375)),
+        ("dbcd", Coordinate::new(4.5703125, -54.140625), Coordinate::new(4.74609375, -53.7890625)),
+        ("dbcde", Coordinate::new(4.658203125, -54.0087890625), Coordinate::new(4.7021484375, -53.96484375)),
+        ("dbcdef", Coordinate::new(4.669189453125, -53.975830078125), Coordinate::new(4.6746826171875, -53.96484375)),
+        ("dbcdef1", Coordinate::new(4.669189453125, -53.974456787109375), Coordinate::new(4.670562744140625, -53.97308349609375)),
+        ("dbcdef12", Coordinate::new(4.669189453125, -53.97411346435547), Coordinate::new(4.669361114501953, -53.97377014160156)),
+        ("dbcdef123", Coordinate::new(4.669232368469238, -53.97407054901123), Coordinate::new(4.669275283813477, -53.97402763366699)),
+        ("dbcdef1234", Coordinate::new(4.669243097305298, -53.97407054901123), Coordinate::new(4.669248461723328, -53.97405982017517)),
+        ("dbcdef12345", Coordinate::new(4.669243097305298, -53.97406652569771), Coordinate::new(4.669244438409805, -53.9740651845932)),
+        ("dbcdef123456", Coordinate::new(4.669243432581425, -53.97406619042158), Coordinate::new(4.669243600219488, -53.974065855145454)),
         ("9g3q", Coordinate::new(19.3359375, -99.4921875), Coordinate::new(19.51171875, -99.140625)),
+        ("ww8p1r4t8", Coordinate::new(37.83236503601074, 112.55836486816406), Coordinate::new(37.83240795135498, 112.558407783508)),
         ("800000000000", Coordinate::new(0.0, -180.0), Coordinate::new(1.6763806343078613e-7, -179.99999966472387)),
     ];
 
     for (hash, expected_left, expected_right) in data {
-        let hash = GeoHash::from_str(hash).expect("to create geo hash");
-        let (left, right) = hash.decode().expect("to decode");
+        let hash = GeoHash::from_str(hash);
+        let (left, right) = hash.decode_bbox().expect("to decode");
 
         compare_coordinates(left, expected_left);
         compare_coordinates(right, expected_right);

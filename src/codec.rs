@@ -118,6 +118,7 @@ impl GeoHash {
     ///Maximum possible length of the geohash
     pub const MAX_LEN: usize = MAX_LEN;
 
+    #[inline(always)]
     ///Creates `len` long geohash for specified coordinates `coord`.
     ///
     ///Returns `None` if `len` is not within `1..=12` range
@@ -131,8 +132,17 @@ impl GeoHash {
         }
     }
 
+    #[inline(always)]
+    ///Creates geohash from string, validating its length within `1..=12` with panic in case of failure
+    pub const fn from_str(text: &str) -> Self {
+        match Self::try_from_str(text) {
+            Some(result) => result,
+            None => panic!("'text' is not valid geohash")
+        }
+    }
+
     ///Creates geohash from string, validating its length within `1..=12`
-    pub const fn from_str(text: &str) -> Option<Self> {
+    pub const fn try_from_str(text: &str) -> Option<Self> {
         if text.len() >= 1 && text.len() <= 12 {
             let mut buffer = [0u8; MAX_LEN];
             unsafe {
@@ -164,7 +174,7 @@ impl GeoHash {
     }
 
     ///Decodes geohash into its cell's coordinates
-    pub const fn decode(&self) -> Result<(Coordinate, Coordinate), DecodeError> {
+    pub const fn decode_bbox(&self) -> Result<(Coordinate, Coordinate), DecodeError> {
         let bits_len = self.len * CHUNK_BITS_SIZE as u8;
 
         let mut position = 0;

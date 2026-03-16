@@ -22,7 +22,7 @@ impl<'de> serde::de::Visitor<'de> for GeoHashVisitor {
 
     #[inline]
     fn visit_str<E: serde::de::Error>(self, v: &str) -> Result<Self::Value, E> {
-        match Self::Value::from_str(v) {
+        match Self::Value::try_from_str(v) {
             Some(result) => Ok(result),
             None => Err(serde::de::Error::custom(format_args!("Exceeds buffer capacity({} bytes)", Self::Value::MAX_LEN)))
         }
